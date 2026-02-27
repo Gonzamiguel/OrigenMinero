@@ -4,7 +4,109 @@ export const LOCALIDADES = ['Rodeo', 'Tudcum', 'Jáchal', 'Calingasta', 'Iglesia
 
 export const RUBROS_B2B = ['Movimiento de Suelos', 'Catering de Campamento', 'Transporte'];
 
+/** Rubros extendidos para perfil B2B de proveedor */
+export const RUBROS_B2B_EXTENDIDOS = [
+  'Movimiento de Suelos',
+  'Transporte y Logística',
+  'Catering',
+  'Obra Civil',
+  'Limpieza/Mantenimiento',
+  'Servicios Profesionales',
+] as const;
+
+export const TIPO_ENTIDAD = [
+  { value: 'sa', label: 'S.A.' },
+  { value: 'srl', label: 'S.R.L.' },
+  { value: 'sas', label: 'S.A.S.' },
+  { value: 'monotributista', label: 'Monotributista' },
+] as const;
+
+export const TAMANO_EMPRESA = [
+  { value: '1_10', label: '1-10 Empleados' },
+  { value: '11_50', label: '11-50 Empleados' },
+  { value: '51_200', label: '51-200 Empleados' },
+  { value: 'mas_200', label: '+200 Empleados' },
+] as const;
+
+export const NORMAS_ISO = [
+  { id: 'iso9001', label: 'ISO 9001' },
+  { id: 'iso14001', label: 'ISO 14001' },
+  { id: 'iso45001', label: 'ISO 45001' },
+] as const;
+
+/** Documentos de compliance para proveedores */
+export const DOCUMENTOS_PROVEEDOR = [
+  { id: 'afip', label: 'Constancia AFIP' },
+  { id: 'mipyme', label: 'Certificado MiPyME' },
+  { id: 'art', label: 'Certificado de Cobertura ART (Con nómina)' },
+  { id: 'seguro', label: 'Pólizas de Seguro (RC / Flota)' },
+  { id: 'libre_deuda', label: 'Certificado de Libre Deuda' },
+] as const;
+
 export const OFICIOS_B2C = ['Soldador Calificado', 'Chofer de Alta Montaña'];
+
+export const GENEROS = [
+  { value: '', label: 'Todos' },
+  { value: 'masculino', label: 'Masculino' },
+  { value: 'femenino', label: 'Femenino' },
+  { value: 'otro', label: 'Otro' },
+] as const;
+
+/** Opciones para perfil estructurado del profesional */
+export const SITUACION_LABORAL = [
+  { value: 'buscando', label: 'Buscando trabajo activamente' },
+  { value: 'escucho', label: 'Trabajando pero escucho ofertas' },
+  { value: 'no_disponible', label: 'No disponible' },
+] as const;
+
+export const DIAGRAMA_ROSTER = [
+  { value: '14x14', label: '14x14' },
+  { value: '8x6', label: '8x6' },
+  { value: 'lunes_viernes', label: 'Lunes a Viernes' },
+  { value: 'sin_preferencia', label: 'Sin preferencia' },
+] as const;
+
+export const EXPERIENCIA_MINERIA = [
+  { value: 'sin', label: 'Sin experiencia' },
+  { value: '1_3', label: '1 a 3 años' },
+  { value: '3_5', label: '3 a 5 años' },
+  { value: 'mas_5', label: 'Más de 5 años' },
+] as const;
+
+export const OFICIOS_EXTENDIDOS = [
+  'Soldador Calificado',
+  'Chofer de Alta Montaña',
+  'Operador de Maquinaria',
+  'Electricista',
+  'Mecánico',
+  'Operador de Planta',
+  'Geólogo',
+  'Topógrafo',
+  'Otro',
+] as const;
+
+export const LICENCIAS_CONDUCIR = [
+  { value: 'no', label: 'No tiene' },
+  { value: 'B1', label: 'B1' },
+  { value: 'C', label: 'C' },
+  { value: 'E1', label: 'E1' },
+  { value: 'E2', label: 'E2' },
+  { value: 'LINTI', label: 'LINTI' },
+] as const;
+
+export const CERTIFICACIONES_SEGURIDAD = [
+  { id: 'altura', label: 'Trabajo en Altura' },
+  { id: 'confinados', label: 'Espacios Confinados' },
+  { id: 'defensivo', label: 'Manejo Defensivo' },
+  { id: 'primeros_auxilios', label: 'Primeros Auxilios' },
+] as const;
+
+export const NIVEL_EDUCACION = [
+  { value: 'primario', label: 'Primario' },
+  { value: 'secundario', label: 'Secundario' },
+  { value: 'terciario', label: 'Terciario/Técnico' },
+  { value: 'universitario', label: 'Universitario' },
+] as const;
 
 export const PERFILES: Perfil[] = [
   {
@@ -17,7 +119,7 @@ export const PERFILES: Perfil[] = [
     descripcion: 'Empresa con 15 años de experiencia en movimiento de tierras para minería.',
     selloValidado: true,
     selloSustentable: true,
-    semaforo: { afip: 'ok', art: 'ok', seguro: 'ok' },
+    semaforo: { afip: 'ok', art: 'ok', seguro: 'ok', mipyme: 'ok', libre_deuda: 'ok' },
     telefono: '+54 264 4567890',
     email: 'carlos@mendozaconstrucciones.com',
   },
@@ -31,7 +133,7 @@ export const PERFILES: Perfil[] = [
     descripcion: 'Catering especializado para campamentos mineros. Menú variado y nutricional.',
     selloValidado: true,
     selloSustentable: false,
-    semaforo: { afip: 'ok', art: 'ok', seguro: 'vencido' },
+    semaforo: { afip: 'ok', art: 'ok', seguro: 'vencido', mipyme: 'ok', libre_deuda: 'en_revision' },
     telefono: '+54 264 5678901',
     email: 'maria@viandasdelvalle.com',
   },
@@ -40,6 +142,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Roberto Sánchez',
     oficio: 'Soldador Calificado',
+    genero: 'masculino',
     localidad: 'Calingasta',
     descripcion: 'Soldador certificado con experiencia en estructuras mineras.',
     selloValidado: true,
@@ -53,6 +156,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Ana Lucía Torres',
     oficio: 'Chofer de Alta Montaña',
+    genero: 'femenino',
     localidad: 'Rodeo',
     descripcion: 'Chofer con licencia profesional para operaciones en altura.',
     selloValidado: true,
@@ -80,6 +184,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Lucía Fernández',
     oficio: 'Soldador Calificado',
+    genero: 'femenino',
     localidad: 'Tudcum',
     descripcion: 'Especialista en soldadura TIG para equipos mineros.',
     selloValidado: true,
@@ -121,6 +226,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Miguel Ángel Ruiz',
     oficio: 'Chofer de Alta Montaña',
+    genero: 'masculino',
     localidad: 'Jáchal',
     descripcion: 'Experiencia en rutas mineras de alta montaña.',
     selloValidado: true,
@@ -134,6 +240,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Fernando López',
     oficio: 'Soldador Calificado',
+    genero: 'masculino',
     localidad: 'Rodeo',
     descripcion: 'Certificación en soldadura MIG/MAG para minería.',
     selloValidado: true,
@@ -147,6 +254,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Claudia Morales',
     oficio: 'Chofer de Alta Montaña',
+    genero: 'femenino',
     localidad: 'Calingasta',
     descripcion: 'Licencia profesional para transporte de personal minero.',
     selloValidado: true,
@@ -160,6 +268,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Jorge Ramírez',
     oficio: 'Soldador Calificado',
+    genero: 'masculino',
     localidad: 'Iglesia',
     descripcion: 'Especialista en reparación de equipos pesados.',
     selloValidado: true,
@@ -173,6 +282,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Patricia Gómez',
     oficio: 'Chofer de Alta Montaña',
+    genero: 'femenino',
     localidad: 'Tudcum',
     descripcion: 'Transporte seguro en zonas de difícil acceso.',
     selloValidado: true,
@@ -186,6 +296,7 @@ export const PERFILES: Perfil[] = [
     tipo: 'profesional',
     nombre: 'Ricardo Díaz',
     oficio: 'Soldador Calificado',
+    genero: 'masculino',
     localidad: 'Ciudad de San Juan',
     descripcion: 'Más de 20 años en estructuras mineras.',
     selloValidado: true,
@@ -294,6 +405,38 @@ export const LICITACIONES: Licitacion[] = [
     localidad: 'Iglesia',
     fechaCierre: '2025-03-20',
     postulantes: ['4'],
+  },
+  {
+    id: '3',
+    titulo: 'Soldadores para obra Calingasta',
+    descripcion: 'Se buscan 3 soldadores calificados para obra de estructuras. Contrato 6 meses.',
+    localidad: 'Calingasta',
+    fechaCierre: '2025-03-25',
+    postulantes: [],
+  },
+  {
+    id: '4',
+    titulo: 'Movimiento de Suelos - Jáchal',
+    descripcion: 'Excavación y nivelación para nuevo campamento. Maquinaria pesada requerida.',
+    localidad: 'Jáchal',
+    fechaCierre: '2025-04-01',
+    postulantes: [],
+  },
+  {
+    id: '5',
+    titulo: 'Choferes de Alta Montaña - Rodeo',
+    descripcion: '2 choferes con licencia profesional para transporte de personal en ruta minera.',
+    localidad: 'Rodeo',
+    fechaCierre: '2025-04-05',
+    postulantes: [],
+  },
+  {
+    id: '6',
+    titulo: 'Catering Campamento Tudcum',
+    descripcion: 'Servicio de alimentación para 80 personas. Desayuno, almuerzo y cena.',
+    localidad: 'Tudcum',
+    fechaCierre: '2025-04-10',
+    postulantes: [],
   },
 ];
 

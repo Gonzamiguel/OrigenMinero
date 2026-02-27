@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Edit3, Upload, Briefcase, BadgeCheck, Leaf } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { SemaforoLegal } from '../components/SemaforoLegal';
 import { useApp } from '../context/AppContext';
 
 export function DashboardUsuarioPage() {
-  const { perfiles, addToast, actualizarDocumento } = useApp();
+  const { perfiles, addToast, cargarDocumento } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const perfil = perfiles[0];
   const [modalEditar, setModalEditar] = useState(false);
   const [modalDocumento, setModalDocumento] = useState(false);
@@ -173,7 +174,24 @@ export function DashboardUsuarioPage() {
         title="Actualizar Documento"
       >
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                cargarDocumento(perfil.id, 'seguro', file);
+                setModalDocumento(false);
+                e.target.value = '';
+              }
+            }}
+          />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-amber-400 transition"
+          >
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-600 font-medium">Arrastre su PDF aquí</p>
             <p className="text-sm text-gray-500 mt-1">o haga clic para seleccionar</p>
@@ -185,15 +203,6 @@ export function DashboardUsuarioPage() {
               className="px-4 py-2 text-gray-600"
             >
               Cancelar
-            </button>
-            <button
-              onClick={() => {
-                actualizarDocumento(perfil.id, 'seguro');
-                setModalDocumento(false);
-              }}
-              className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500"
-            >
-              Cargar
             </button>
           </div>
         </div>

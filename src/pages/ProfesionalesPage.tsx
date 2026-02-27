@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
 import { TarjetaPerfil } from '../components/TarjetaPerfil';
-import { LOCALIDADES, OFICIOS_B2C } from '../data/mockData';
+import { LOCALIDADES, OFICIOS_B2C, GENEROS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
+import { useMockAuth } from '../context/MockAuthContext';
 
 export function ProfesionalesPage() {
   const { perfiles } = useApp();
+  const { canViewContacts } = useMockAuth();
   const [localidad, setLocalidad] = useState('');
   const [oficio, setOficio] = useState('');
+  const [genero, setGenero] = useState('');
   const [soloValidados, setSoloValidados] = useState(false);
   const [selloSustentable, setSelloSustentable] = useState(false);
 
@@ -16,9 +19,10 @@ export function ProfesionalesPage() {
         .filter((p) => p.tipo === 'profesional')
         .filter((p) => !localidad || p.localidad === localidad)
         .filter((p) => !oficio || p.oficio === oficio)
+        .filter((p) => !genero || p.genero === genero)
         .filter((p) => !soloValidados || p.selloValidado)
         .filter((p) => !selloSustentable || p.selloSustentable),
-    [perfiles, localidad, oficio, soloValidados, selloSustentable]
+    [perfiles, localidad, oficio, genero, soloValidados, selloSustentable]
   );
 
   return (
@@ -55,6 +59,18 @@ export function ProfesionalesPage() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Género</label>
+                <select
+                  value={genero}
+                  onChange={(e) => setGenero(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  {GENEROS.map((g) => (
+                    <option key={g.value || 'todos'} value={g.value}>{g.label}</option>
+                  ))}
+                </select>
+              </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -79,7 +95,7 @@ export function ProfesionalesPage() {
             <p className="text-gray-600 mb-4">{profesionales.length} resultados</p>
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {profesionales.map((p) => (
-                <TarjetaPerfil key={p.id} perfil={p} />
+                <TarjetaPerfil key={p.id} perfil={p} showContact={canViewContacts} />
               ))}
             </div>
           </main>

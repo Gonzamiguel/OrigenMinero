@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { TarjetaPerfil } from '../components/TarjetaPerfil';
 import { LOCALIDADES, RUBROS_B2B } from '../data/mockData';
 import { useApp } from '../context/AppContext';
+import { useMockAuth } from '../context/MockAuthContext';
 
 export function ProveedoresPage() {
   const [searchParams] = useSearchParams();
   const { perfiles } = useApp();
+  const { canViewContacts } = useMockAuth();
   const [localidad, setLocalidad] = useState(searchParams.get('localidad') || '');
   const [rubro, setRubro] = useState('');
   const [soloValidados, setSoloValidados] = useState(false);
@@ -81,7 +83,7 @@ export function ProveedoresPage() {
             <p className="text-gray-600 mb-4">{proveedores.length} resultados</p>
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {proveedores.map((p) => (
-                <TarjetaPerfil key={p.id} perfil={p} />
+                <TarjetaPerfil key={p.id} perfil={p} showContact={canViewContacts} />
               ))}
             </div>
           </main>

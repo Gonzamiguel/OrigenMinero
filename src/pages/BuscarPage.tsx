@@ -3,10 +3,13 @@ import { X, Download, Phone } from 'lucide-react';
 import { SemaforoLegal } from '../components/SemaforoLegal';
 import { LOCALIDADES, RUBROS_B2B, OFICIOS_B2C } from '../data/mockData';
 import { useApp } from '../context/AppContext';
+import { useMockAuth } from '../context/MockAuthContext';
+import { descargarLegajo } from '../utils/descargarLegajo';
 import type { Perfil } from '../types';
 
 export function BuscarPage() {
-  const { perfiles } = useApp();
+  const { perfiles, historialDocumentos, addToast } = useApp();
+  const { canViewContacts } = useMockAuth();
   const [localidad, setLocalidad] = useState('');
   const [rubro, setRubro] = useState('');
   const [tipo, setTipo] = useState<'proveedor' | 'profesional'>('proveedor');
@@ -115,7 +118,7 @@ export function BuscarPage() {
             <p className="text-sm text-gray-600 mb-4">{perfilSeleccionado.descripcion}</p>
             <SemaforoLegal semaforo={perfilSeleccionado.semaforo} />
             <div className="mt-6 space-y-2">
-              {perfilSeleccionado.telefono && (
+              {canViewContacts && perfilSeleccionado.telefono && (
                 <a
                   href={`tel:${perfilSeleccionado.telefono}`}
                   className="flex items-center gap-2 w-full py-2 px-4 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
@@ -124,10 +127,24 @@ export function BuscarPage() {
                   {perfilSeleccionado.telefono}
                 </a>
               )}
-              <button className="flex items-center gap-2 w-full py-2 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-500">
-                <Download className="w-4 h-4" />
-                Descargar Legajo (.ZIP)
-              </button>
+              {canViewContacts &&
+                Object.values(perfilSeleccionado.semaforo).every((e) => e === 'ok') && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfilSeleccionado.id);
+                        await descargarLegajo(perfilSeleccionado, historialFiltrado);
+                        addToast('Legajo descargado correctamente.');
+                      } catch {
+                        addToast('Error al descargar el legajo.', 'error');
+                      }
+                    }}
+                    className="flex items-center gap-2 w-full py-2 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-500"
+                  >
+                    <Download className="w-4 h-4" />
+                    Descargar Legajo (.ZIP)
+                  </button>
+                )}
             </div>
           </div>
         </div>

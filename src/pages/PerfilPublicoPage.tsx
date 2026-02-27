@@ -1,11 +1,18 @@
-import { useParams } from 'react-router-dom';
-import { BadgeCheck, Leaf, MapPin, Lock } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { BadgeCheck, Leaf, MapPin, Lock, Phone, Download } from 'lucide-react';
 import { SemaforoLegal } from '../components/SemaforoLegal';
+import { ContactoBloqueado } from '../components/ContactoBloqueado';
+import { DossierProfesionalMinera } from '../components/DossierProfesionalMinera';
+import { DossierProveedorMinera } from '../components/DossierProveedorMinera';
 import { useApp } from '../context/AppContext';
+import { useMockAuth } from '../context/MockAuthContext';
+import { descargarLegajo } from '../utils/descargarLegajo';
 
 export function PerfilPublicoPage() {
   const { id } = useParams();
-  const { perfiles } = useApp();
+  const navigate = useNavigate();
+  const { perfiles, historialDocumentos, addToast } = useApp();
+  const { canViewContacts, userRole } = useMockAuth();
   const perfil = perfiles.find((p) => p.id === id);
 
   if (!perfil) {
@@ -13,6 +20,32 @@ export function PerfilPublicoPage() {
       <div className="min-h-[calc(100vh-4rem)] bg-slate-50 flex items-center justify-center">
         <p className="text-gray-600">Perfil no encontrado</p>
       </div>
+    );
+  }
+
+  // Minera viendo profesional: Dossier Digital de Compliance
+  if (userRole === 'minera' && perfil.tipo === 'profesional') {
+    const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
+    return (
+      <DossierProfesionalMinera
+        perfil={perfil}
+        historialFiltrado={historialFiltrado}
+        addToast={addToast}
+        variant="inline"
+      />
+    );
+  }
+
+  // Minera viendo proveedor: Dossier B2B de Auditoría
+  if (userRole === 'minera' && perfil.tipo === 'proveedor') {
+    const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
+    return (
+      <DossierProveedorMinera
+        perfil={perfil}
+        historialFiltrado={historialFiltrado}
+        addToast={addToast}
+        variant="inline"
+      />
     );
   }
 
@@ -55,32 +88,86 @@ export function PerfilPublicoPage() {
               <SemaforoLegal semaforo={perfil.semaforo} />
             </div>
 
-            <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-              <Lock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-amber-800">Requiere inicio de sesión corporativo</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  Los botones "Ver Contacto" y "Descargar Legajo (.ZIP)" están disponibles solo para empresas mineras registradas.
-                </p>
+            {canViewContacts ? (
+              <div className="mt-8 space-y-4">
+                {(perfil.telefono || perfil.email) && (
+                  <div className="space-y-2">
+                    {perfil.telefono && (
+                      <a
+                        href={`tel:${perfil.telefono}`}
+                        className="flex items-center gap-2 w-full py-3 px-4 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 font-medium"
+                      >
+                        <Phone className="w-4 h-4" />
+                        {perfil.telefono}
+                      </a>
+                    )}
+                    {perfil.email && (
+                      <a
+                        href={`mailto:${perfil.email}`}
+                        className="flex items-center gap-2 w-full py-3 px-4 bg-slate-100 text-slate-800 rounded-lg hover:bg-slate-200 font-medium"
+                      >
+                        {perfil.email}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {(() => {
+                  const docsOk = Object.values(perfil.semaforo).every((e) => e === 'ok');
+                  return docsOk ? (
+                    <button
+                      onClick={async () => {
+                        addToast(`Descargando legajo de ${perfil.empresa || perfil.nombre}...`, 'info');
+                        try {
+                          const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
+                          await descargarLegajo(perfil, historialFiltrado);
+                          addToast('Legajo descargado correctamente.');
+                        } catch {
+                          addToast('Error al descargar el legajo.', 'error');
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-amber-600 text-white rounded-lg hover:bg-amber-500 font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Descargar Legajo (.ZIP)
+                    </button>
+                  ) : (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-800 font-medium">
+                        El legajo no está disponible aún. Algunos documentos están pendientes de validación por el auditor.
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                disabled
-                className="flex-1 py-3 px-4 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4" />
-                Ver Contacto
-              </button>
-              <button
-                disabled
-                className="flex-1 py-3 px-4 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4" />
-                Descargar Legajo (.ZIP)
-              </button>
-            </div>
+            ) : (
+              <>
+                <div className="mt-8">
+                  <ContactoBloqueado />
+                </div>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => {
+                      addToast('Iniciá sesión como Empresa para ver el contacto.');
+                      navigate('/registro');
+                    }}
+                    className="flex-1 py-3 px-4 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 flex items-center justify-center gap-2 transition"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Ver Contacto
+                  </button>
+                  <button
+                    onClick={() => {
+                      addToast('Iniciá sesión como Empresa para descargar el legajo.');
+                      navigate('/registro');
+                    }}
+                    className="flex-1 py-3 px-4 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 flex items-center justify-center gap-2 transition"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Descargar Legajo (.ZIP)
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

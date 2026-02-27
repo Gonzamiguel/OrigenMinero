@@ -22,7 +22,9 @@ export function TarjetaPerfil({ perfil, variant = 'grid', showContact = false }:
       <div className="flex gap-4">
         <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
           <span className="text-2xl font-bold text-slate-800">
-            {perfil.nombre.charAt(0)}
+            {perfil.tipo === 'proveedor' && perfil.empresa
+              ? perfil.empresa.charAt(0)
+              : perfil.nombre.charAt(0)}
           </span>
         </div>
         <div className="flex-1 min-w-0">

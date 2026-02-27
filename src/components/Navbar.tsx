@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Users, Search, FileText, Gavel, Shield } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useMockAuth } from '../context/MockAuthContext';
+import { getNavbarDashboardLink } from '../config/dashboardLinks';
 
 const navLinks = [
   { to: '/', label: 'Inicio' },
@@ -10,21 +11,16 @@ const navLinks = [
   { to: '/registro', label: 'Registro' },
 ];
 
-const privateLinks = [
-  { to: '/dashboard/usuario', label: 'Mi Panel', icon: Users },
-  { to: '/app/buscar', label: 'Buscar', icon: Search },
-  { to: '/app/proyectos-rse', label: 'RSE', icon: FileText },
-  { to: '/app/licitaciones', label: 'Licitaciones', icon: Gavel },
-  { to: '/admin/auditoria', label: 'Auditoría', icon: Shield },
-];
-
 export function Navbar() {
   const location = useLocation();
-  const { user } = useApp();
+  const { userRole, hasDashboardAccess, isAdmin } = useMockAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const showPrivateNav = hasDashboardAccess || isAdmin;
+  const dashboardLink = getNavbarDashboardLink(userRole);
+  const DashboardIcon = dashboardLink?.icon;
 
   const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path.split('?')[0]);
 
   return (
     <nav className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
@@ -53,21 +49,21 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
-            {user &&
-              privateLinks.map(({ to, label, icon: Icon }) => (
+            {showPrivateNav &&
+              dashboardLink &&
+              DashboardIcon && (
                 <Link
-                  key={to}
-                  to={to}
+                  to={dashboardLink.to}
                   className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg w-fit leading-none min-h-[32px] ${
-                    isActive(to)
+                    isActive(dashboardLink.to)
                       ? 'bg-slate-800 text-white shadow-lg'
                       : 'bg-slate-800 text-white hover:bg-slate-700'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  {label}
+                  <DashboardIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                  {dashboardLink.label}
                 </Link>
-              ))}
+              )}
           </div>
 
           <button
@@ -92,20 +88,20 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
-            {user &&
-              privateLinks.map(({ to, label, icon: Icon }) => (
+            {showPrivateNav &&
+              dashboardLink &&
+              DashboardIcon && (
                 <Link
-                  key={to}
-                  to={to}
+                  to={dashboardLink.to}
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium ${
-                    isActive(to) ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                    isActive(dashboardLink.to) ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  {label}
+                  <DashboardIcon className="w-4 h-4" />
+                  {dashboardLink.label}
                 </Link>
-              ))}
+              )}
           </div>
         )}
       </div>

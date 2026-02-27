@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { HardHat, Factory, Handshake, Sprout, BadgeCheck } from 'lucide-react';
+import { HardHat, Factory, Handshake, Sprout, BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PERFILES, LOCALIDADES, PARTNERS } from '../data/mockData';
 import LogoLoop from '../components/LogoLoop';
+
+/** Imágenes de fondo del hero (slider). Podés usar /hero/montana1.jpg locales o URLs externas. */
+const HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
+];
 
 const PILARES = [
   { icon: HardHat, titulo: 'Mano de Obra Local', desc: 'Validación de residencia y antecedentes.', color: 'blue' },
@@ -15,6 +22,31 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [localidad, setLocalidad] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [heroIndex, setHeroIndex] = useState(0);
+  const profesionalesScrollRef = useRef<HTMLDivElement>(null);
+  const proveedoresScrollRef = useRef<HTMLDivElement>(null);
+
+  const CARD_WIDTH = 240;
+  const CARD_GAP = 32;
+  const scrollProfesionales = (delta: number) => {
+    const el = profesionalesScrollRef.current;
+    if (!el) return;
+    const step = CARD_WIDTH + CARD_GAP;
+    el.scrollTo({ left: el.scrollLeft + delta * step, behavior: 'smooth' });
+  };
+  const scrollProveedores = (delta: number) => {
+    const el = proveedoresScrollRef.current;
+    if (!el) return;
+    const step = CARD_WIDTH + CARD_GAP;
+    el.scrollTo({ left: el.scrollLeft + delta * step, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroIndex((i) => (i + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const profesionales = PERFILES.filter((p) => p.tipo === 'profesional' && p.selloValidado).slice(0, 9);
   const proveedores = PERFILES.filter((p) => p.tipo === 'proveedor' && p.selloValidado).slice(0, 9);
@@ -33,48 +65,72 @@ export function LandingPage() {
   const CardPerfil = ({ id, oficio, nombre, descripcion, localidad }: (typeof profesionales)[0]) => (
     <Link
       to={`/perfil/publico/${id}`}
-      className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col h-full hover:shadow-md hover:border-slate-300 transition"
+      className="bg-white rounded-lg border border-slate-200 shadow-md flex flex-col w-[240px] h-[340px] hover:shadow-lg hover:border-slate-300 transition overflow-hidden"
     >
-      <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">{oficio}</p>
-      <h3 className="font-bold text-slate-800 text-lg mb-1">{nombre}</h3>
-      <p className="text-sm text-slate-600 flex-1">{descripcion}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-slate-500">{localidad}</span>
-        <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
-          <BadgeCheck className="w-3.5 h-3.5" />
-          Validado
-        </span>
+      <div className="bg-slate-100 h-24 flex items-center justify-center flex-shrink-0">
+        <span className="text-3xl font-bold text-slate-600">{nombre.charAt(0)}</span>
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{oficio}</p>
+        <h3 className="font-bold text-slate-800 text-base mb-2">{nombre}</h3>
+        <p className="text-sm text-slate-600 flex-1 line-clamp-4">{descripcion}</p>
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-xs text-slate-500">{localidad}</span>
+          <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
+            <BadgeCheck className="w-3.5 h-3.5" />
+            Validado
+          </span>
+        </div>
       </div>
     </Link>
   );
 
-  const CardProveedor = ({ id, rubro, empresa, descripcion, localidad }: (typeof proveedores)[0]) => (
+  const CardProveedor = ({ id, rubro, empresa, nombre, descripcion, localidad }: (typeof proveedores)[0]) => (
     <Link
       to={`/perfil/publico/${id}`}
-      className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col h-full hover:shadow-md hover:border-slate-300 transition"
+      className="bg-white rounded-lg border border-slate-200 shadow-md flex flex-col w-[240px] h-[340px] hover:shadow-lg hover:border-slate-300 transition overflow-hidden"
     >
-      <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">{rubro}</p>
-      <h3 className="font-bold text-slate-800 text-lg mb-1">{empresa}</h3>
-      <p className="text-sm text-slate-600 flex-1">{descripcion}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-slate-500">{localidad}</span>
-        <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
-          <BadgeCheck className="w-3.5 h-3.5" />
-          Validado
-        </span>
+      <div className="bg-slate-100 h-24 flex items-center justify-center flex-shrink-0">
+        <span className="text-3xl font-bold text-slate-600">{(empresa || nombre).charAt(0)}</span>
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{rubro}</p>
+        <h3 className="font-bold text-slate-800 text-base mb-2">{empresa}</h3>
+        <p className="text-sm text-slate-600 flex-1 line-clamp-4">{descripcion}</p>
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-xs text-slate-500">{localidad}</span>
+          <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
+            <BadgeCheck className="w-3.5 h-3.5" />
+            Validado
+          </span>
+        </div>
       </div>
     </Link>
   );
 
   return (
     <div className="bg-slate-50">
-      {/* Sección 1: Hero con búsqueda */}
-      <section className="min-h-[calc(100vh-4rem)] flex flex-col justify-center bg-slate-50 px-4 py-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+      {/* Sección 1: Hero con búsqueda - slider de montañas de fondo */}
+      <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center px-4 py-12 overflow-hidden">
+        {/* Slider de fondo */}
+        <div className="absolute inset-0">
+          {HERO_IMAGES.map((src, i) => (
+            <div
+              key={src}
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+                i === heroIndex ? 'opacity-100 z-0' : 'opacity-0 z-0'
+              }`}
+              style={{ backgroundImage: `url(${src})` }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-slate-900/60 z-[1]" />
+        </div>
+        {/* Contenido fijo encima */}
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
             Conectamos la minería con talento local validado
           </h1>
-          <p className="text-xl text-slate-600 mb-8">
+          <p className="text-xl text-slate-200 mb-8 drop-shadow-md">
             Marketplace alineado con los 4 Pilares de la Ley Minera de San Juan
           </p>
           <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
@@ -83,12 +139,12 @@ export function LandingPage() {
               placeholder="Buscar proveedores, profesionales..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-lg text-slate-900 bg-white border-2 border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-200 outline-none transition"
+              className="flex-1 px-4 py-3 rounded-lg text-slate-900 bg-white/95 border-2 border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-200 outline-none transition shadow-lg"
             />
             <select
               value={localidad}
               onChange={(e) => setLocalidad(e.target.value)}
-              className="px-4 py-3 rounded-lg text-slate-900 min-w-[180px] border-2 border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition bg-white"
+              className="px-4 py-3 rounded-lg text-slate-900 min-w-[180px] border-2 border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition bg-white/95 shadow-lg"
             >
               <option value="">Todas las localidades</option>
               {LOCALIDADES.map((l) => (
@@ -97,7 +153,7 @@ export function LandingPage() {
             </select>
             <button
               onClick={handleBuscar}
-              className="px-6 py-3 bg-amber-600 hover:bg-amber-500 rounded-lg font-semibold transition"
+              className="px-6 py-3 bg-amber-600 hover:bg-amber-500 rounded-lg font-semibold transition text-white shadow-lg"
             >
               Buscar
             </button>
@@ -144,16 +200,42 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Sección 3: Profesionales validados - Grid 3x3 */}
-      <section className="min-h-[calc(100vh-4rem)] flex flex-col justify-center py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
+      {/* Sección 3: Profesionales validados - 3 cards con slider */}
+      <section className="flex flex-col justify-center py-16 px-4 bg-white">
+        <div className="max-w-6xl mx-auto w-full flex flex-col items-center">
           <h2 className="text-2xl font-bold text-slate-800 mb-10">
             Profesionales validados
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {profesionales.map((p) => (
-              <CardPerfil key={p.id} {...p} />
-            ))}
+          <div className="flex items-center gap-6 justify-center w-full">
+            <button
+              onClick={() => scrollProfesionales(-1)}
+              className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition"
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div
+              ref={profesionalesScrollRef}
+              className="flex-1 min-w-0 max-w-[832px] flex gap-8 overflow-x-auto overflow-y-hidden scroll-smooth py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              style={{ scrollSnapType: 'x mandatory' }}
+            >
+              {profesionales.map((p) => (
+                <div
+                  key={p.id}
+                  data-card
+                  className="flex-shrink-0 w-[240px] snap-start"
+                >
+                  <CardPerfil {...p} />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => scrollProfesionales(1)}
+              className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition"
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </section>
@@ -185,16 +267,42 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Sección 5: Proveedores validados - Grid 3x3 */}
-      <section className="min-h-[calc(100vh-4rem)] flex flex-col justify-center py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
+      {/* Sección 5: Proveedores validados - 3 cards con slider */}
+      <section className="flex flex-col justify-center py-16 px-4 bg-white">
+        <div className="max-w-6xl mx-auto w-full flex flex-col items-center">
           <h2 className="text-2xl font-bold text-slate-800 mb-10">
             Proveedores validados
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {proveedores.map((p) => (
-              <CardProveedor key={p.id} {...p} />
-            ))}
+          <div className="flex items-center gap-6 justify-center w-full">
+            <button
+              onClick={() => scrollProveedores(-1)}
+              className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition"
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div
+              ref={proveedoresScrollRef}
+              className="flex-1 min-w-0 max-w-[832px] flex gap-8 overflow-x-auto overflow-y-hidden scroll-smooth py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              style={{ scrollSnapType: 'x mandatory' }}
+            >
+              {proveedores.map((p) => (
+                <div
+                  key={p.id}
+                  data-card
+                  className="flex-shrink-0 w-[240px] snap-start"
+                >
+                  <CardProveedor {...p} />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => scrollProveedores(1)}
+              className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition"
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </section>

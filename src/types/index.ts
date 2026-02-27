@@ -4,6 +4,8 @@ export type EstadoDocumento = 'ok' | 'pendiente' | 'vencido' | 'en_revision';
 
 export type EstadoSello = 'validado' | 'pendiente' | 'rechazado';
 
+export type Genero = 'masculino' | 'femenino' | 'otro';
+
 export interface Perfil {
   id: string;
   tipo: TipoPerfil;
@@ -11,6 +13,7 @@ export interface Perfil {
   empresa?: string;
   rubro?: string;
   oficio?: string;
+  genero?: Genero;
   localidad: string;
   foto?: string;
   descripcion: string;
@@ -21,6 +24,8 @@ export interface Perfil {
     art: EstadoDocumento;
     seguro: EstadoDocumento;
     residencia?: EstadoDocumento;
+    mipyme?: EstadoDocumento;
+    libre_deuda?: EstadoDocumento;
   };
   telefono?: string;
   email?: string;
@@ -33,6 +38,7 @@ export interface ProyectoRSE {
   descripcion: string;
   fechaInicio: string;
   estado: 'activo' | 'completado';
+  montoInvertido?: number;
 }
 
 export interface Licitacion {
@@ -51,4 +57,31 @@ export interface PerfilAuditoria {
   localidad: string;
   estado: EstadoSello;
   tipoSello: 'local' | 'sustentable';
+}
+
+export type TipoDocumento = keyof Perfil['semaforo'];
+
+export interface DocumentoAuditoria {
+  id: string;
+  historialId: string;
+  perfilId: string;
+  tipoDocumento: TipoDocumento;
+  nombrePerfil: string;
+  empresa?: string;
+  localidad: string;
+  fechaCarga: string;
+}
+
+export type EstadoHistorialDocumento = 'en_revision' | 'aprobado' | 'rechazado';
+
+export type TipoDocumentoHistorial = TipoDocumento | 'cv';
+
+export interface HistorialDocumento {
+  id: string;
+  perfilId: string;
+  tipoDocumento: TipoDocumentoHistorial;
+  nombreArchivo: string;
+  fechaCarga: string;
+  estado: EstadoHistorialDocumento;
+  fechaResolucion?: string;
 }
