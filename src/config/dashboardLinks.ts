@@ -9,6 +9,8 @@ import {
   FileCheck,
   UserCircle,
   Building2,
+  Users,
+  AlertTriangle,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '../lib/firebase/types';
@@ -35,6 +37,9 @@ export const DASHBOARD_LINKS: DashboardLink[] = [
   { to: '/dashboard/minera', label: 'Buscador', icon: Search, roles: ['minera'] },
   { to: '/dashboard/minera?tab=rse', label: 'RSE', icon: FileText, roles: ['minera'] },
   { to: '/dashboard/minera?tab=licitaciones', label: 'Licitaciones', icon: Gavel, roles: ['minera'] },
+  { to: '/dashboard/auditor/panel', label: 'Panel de Control', icon: LayoutDashboard, roles: ['auditor'] },
+  { to: '/dashboard/auditor/directorio', label: 'Directorio', icon: Users, roles: ['auditor'] },
+  { to: '/dashboard/auditor/vencimientos', label: 'Vencimientos', icon: AlertTriangle, roles: ['auditor'] },
   { to: '/dashboard/auditor/pendientes', label: 'Bandeja de Entrada', icon: FileCheck, roles: ['auditor'] },
   { to: '/dashboard/auditor/completadas', label: 'Auditorías Completadas', icon: History, roles: ['auditor'] },
   { to: '/admin-gonzalo', label: 'Admin', icon: Settings, roles: ['admin'] },
@@ -55,7 +60,7 @@ export function getNavbarDashboardLink(role: RoleOrGuest): DashboardLink | null 
   proveedor: { to: '/dashboard/documentos', label: 'Mi Panel', icon: User, roles: ['proveedor'] },
   profesional: { to: '/dashboard/profesional/documentos', label: 'Mi Panel', icon: User, roles: ['profesional'] },
     minera: { to: '/dashboard/minera', label: 'Mi Panel', icon: Search, roles: ['minera'] },
-    auditor: { to: '/dashboard/auditor/pendientes', label: 'Mi Panel', icon: LayoutDashboard, roles: ['auditor'] },
+    auditor: { to: '/dashboard/auditor/panel', label: 'Mi Panel', icon: LayoutDashboard, roles: ['auditor'] },
     admin: { to: '/admin-gonzalo', label: 'Admin', icon: Settings, roles: ['admin'] },
   };
   return entryPoints[role] || null;

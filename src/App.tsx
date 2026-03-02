@@ -23,6 +23,10 @@ import { ProfesionalPerfilPage } from './pages/dashboard/ProfesionalPerfilPage';
 import { MineraDashboardPage } from './pages/dashboard/MineraDashboardPage';
 import { AuditorPendientesPage } from './pages/dashboard/auditor/AuditorPendientesPage';
 import { AuditorCompletadasPage } from './pages/dashboard/auditor/AuditorCompletadasPage';
+import { AuditorPanelPage } from './pages/dashboard/auditor/AuditorPanelPage';
+import { AuditorDirectorioPage } from './pages/dashboard/auditor/AuditorDirectorioPage';
+import { AuditorVencimientosPage } from './pages/dashboard/auditor/AuditorVencimientosPage';
+import { AuditorPerfilDetallePage } from './pages/dashboard/auditor/AuditorPerfilDetallePage';
 import { AdminGonzaloPage } from './pages/AdminGonzaloPage';
 import { DashboardRedirect } from './components/DashboardRedirect';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -126,6 +130,46 @@ function App() {
                     }
                   />
                   <Route
+                    path="auditor/panel"
+                    element={
+                      <ProtectedRoute allowedRoles={['auditor']}>
+                        <ErrorBoundary>
+                          <AuditorPanelPage />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="auditor/directorio"
+                    element={
+                      <ProtectedRoute allowedRoles={['auditor']}>
+                        <ErrorBoundary>
+                          <AuditorDirectorioPage />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="auditor/directorio/:id"
+                    element={
+                      <ProtectedRoute allowedRoles={['auditor']}>
+                        <ErrorBoundary>
+                          <AuditorPerfilDetallePage />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="auditor/vencimientos"
+                    element={
+                      <ProtectedRoute allowedRoles={['auditor']}>
+                        <ErrorBoundary>
+                          <AuditorVencimientosPage />
+                        </ErrorBoundary>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="auditor/pendientes"
                     element={
                       <ProtectedRoute allowedRoles={['auditor']}>
@@ -147,7 +191,7 @@ function App() {
                   />
                   <Route
                     path="auditor"
-                    element={<Navigate to="/dashboard/auditor/pendientes" replace />}
+                    element={<Navigate to="/dashboard/auditor/panel" replace />}
                   />
                   <Route index element={<DashboardRedirect />} />
                 </Route>
