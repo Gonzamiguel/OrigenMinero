@@ -3,13 +3,14 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { getUserDocuments } from '../../../lib/firebase/documentService';
 import { getLatestDocumentByType } from '../../../lib/firebase/documentUtils';
 
-const PILARES_LEGALES = [
-  'Constancia AFIP',
-  'Certificado MiPyME',
-  'ART',
-  'Seguro RC',
-  'Certificado de Libre Deuda',
-  'DNI',
+const PILARES_LEGALES_PROFESIONAL = [
+  'DNI (Frente y Dorso)',
+  'Antecedentes Penales',
+  'Examen Médico (Preocupacional)',
+  'Licencia de Conducir',
+  'Título/Matrícula',
+  'Curriculum Vitae',
+  'Certificado de Residencia',
 ];
 
 function ComplianceCard({
@@ -44,7 +45,7 @@ function ComplianceCard({
   );
 }
 
-export function TabComplianceLegal() {
+export function TabComplianceProfesional() {
   const { user } = useAuth();
   const [latestByType, setLatestByType] = useState<Map<string, { estado: string }>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -86,7 +87,7 @@ export function TabComplianceLegal() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {PILARES_LEGALES.map((label) => {
+      {PILARES_LEGALES_PROFESIONAL.map((label) => {
         const doc = latestByType.get(label);
         const estado = doc ? (doc.estado as 'pendiente' | 'aprobado' | 'rechazado') : 'faltante';
         return (

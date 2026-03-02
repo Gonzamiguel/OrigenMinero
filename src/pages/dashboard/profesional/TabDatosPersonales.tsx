@@ -7,6 +7,7 @@ export interface DatosPersonalesForm {
   telefono: string;
   email: string;
   localidad: string;
+  domicilio: string;
 }
 
 interface TabDatosPersonalesProps {
@@ -78,6 +79,16 @@ export function TabDatosPersonales({ form, onChange }: TabDatosPersonalesProps) 
             <option key={l} value={l}>{l}</option>
           ))}
         </select>
+      </div>
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-slate-700 mb-1">Domicilio</label>
+        <input
+          type="text"
+          value={form.domicilio}
+          onChange={(e) => onChange('domicilio', e.target.value)}
+          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-200 focus:border-amber-500 outline-none"
+          placeholder="Calle, número, barrio"
+        />
       </div>
     </div>
   );

@@ -2,11 +2,11 @@ import { useState, useMemo } from 'react';
 import { TarjetaPerfil } from '../components/TarjetaPerfil';
 import { LOCALIDADES, OFICIOS_B2C, GENEROS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
-import { useMockAuth } from '../context/MockAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ProfesionalesPage() {
   const { perfiles } = useApp();
-  const { canViewContacts } = useMockAuth();
+  const { canViewContacts } = useAuth();
   const [localidad, setLocalidad] = useState('');
   const [oficio, setOficio] = useState('');
   const [genero, setGenero] = useState('');

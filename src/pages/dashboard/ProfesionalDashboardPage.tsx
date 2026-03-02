@@ -34,7 +34,10 @@ export function ProfesionalDashboardPage() {
     perfilActual && licitaciones.find((l) => l.id === licId)?.postulantes.includes(perfilActual.id);
 
   if (!tabParam || tabParam === 'panel') {
-    return <Navigate to="/dashboard/profesional/perfil" replace />;
+    return <Navigate to="/dashboard/profesional/documentos" replace />;
+  }
+  if (tabParam === 'historial') {
+    return <Navigate to="/dashboard/profesional/historial" replace />;
   }
 
   const handlePostular = (licId: string) => {

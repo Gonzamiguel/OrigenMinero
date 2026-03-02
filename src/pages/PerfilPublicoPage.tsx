@@ -5,14 +5,14 @@ import { ContactoBloqueado } from '../components/ContactoBloqueado';
 import { DossierProfesionalMinera } from '../components/DossierProfesionalMinera';
 import { DossierProveedorMinera } from '../components/DossierProveedorMinera';
 import { useApp } from '../context/AppContext';
-import { useMockAuth } from '../context/MockAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { descargarLegajo } from '../utils/descargarLegajo';
 
 export function PerfilPublicoPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { perfiles, historialDocumentos, addToast } = useApp();
-  const { canViewContacts, userRole } = useMockAuth();
+  const { canViewContacts, userRole } = useAuth();
   const perfil = perfiles.find((p) => p.id === id);
 
   if (!perfil) {
@@ -148,7 +148,7 @@ export function PerfilPublicoPage() {
                   <button
                     onClick={() => {
                       addToast('Iniciá sesión como Empresa para ver el contacto.');
-                      navigate('/registro');
+                      navigate('/login');
                     }}
                     className="flex-1 py-3 px-4 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 flex items-center justify-center gap-2 transition"
                   >
@@ -158,7 +158,7 @@ export function PerfilPublicoPage() {
                   <button
                     onClick={() => {
                       addToast('Iniciá sesión como Empresa para descargar el legajo.');
-                      navigate('/registro');
+                      navigate('/login');
                     }}
                     className="flex-1 py-3 px-4 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 flex items-center justify-center gap-2 transition"
                   >

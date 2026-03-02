@@ -1,24 +1,17 @@
-import { useState, useMemo } from 'react';
-import { User, Settings, GraduationCap, FileText } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { User, Settings, Scale, Loader2 } from 'lucide-react';
 import { TabDatosPersonales, type DatosPersonalesForm } from './profesional/TabDatosPersonales';
 import { TabPerfilOperativo, type PerfilOperativoForm } from './profesional/TabPerfilOperativo';
-import { TabCredencialesTecnicas, type CredencialesTecnicasForm } from './profesional/TabCredencialesTecnicas';
-import { TabDocumentacion, type DocumentoEstado } from './profesional/TabDocumentacion';
+import { TabComplianceProfesional } from './profesional/TabComplianceProfesional';
+import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { getProfesionalProfile, createOrUpdateProfile } from '../../lib/firebase/db';
 
 const TABS = [
   { id: 'datos', label: 'Datos Personales', icon: User },
   { id: 'operativo', label: 'Perfil Operativo', icon: Settings },
-  { id: 'credenciales', label: 'Credenciales Técnicas', icon: GraduationCap },
-  { id: 'documentacion', label: 'Documentación', icon: FileText },
+  { id: 'compliance', label: 'Estado de Compliance', icon: Scale },
 ] as const;
-
-const DOCUMENTOS_INICIALES: DocumentoEstado[] = [
-  { id: 'dni', label: 'DNI (Frente y Dorso)', estado: 'pendiente' },
-  { id: 'residencia', label: 'Certificado de Residencia', estado: 'pendiente' },
-  { id: 'antecedentes', label: 'Certificado de Antecedentes Penales', estado: 'pendiente' },
-  { id: 'cv', label: 'Curriculum Vitae (PDF)', estado: 'pendiente' },
-];
 
 const initialDatos: DatosPersonalesForm = {
   nombreCompleto: '',
@@ -27,93 +20,131 @@ const initialDatos: DatosPersonalesForm = {
   telefono: '',
   email: '',
   localidad: '',
+  domicilio: '',
 };
 
 const initialOperativo: PerfilOperativoForm = {
-  situacionLaboral: '',
+  oficio: '',
+  experienciaMineria: '',
   diagramaRoster: '',
   pernocteCampamento: null,
-  experienciaMineria: '',
 };
 
-const initialCredenciales: CredencialesTecnicasForm = {
-  oficio: '',
-  licenciaConducir: 'no',
-  certificaciones: [],
-  nivelEducacion: '',
-};
-
-function calcProgress(
-  datos: DatosPersonalesForm,
-  operativo: PerfilOperativoForm,
-  credenciales: CredencialesTecnicasForm,
-  documentos: DocumentoEstado[]
-): number {
+function calcProgress(datos: DatosPersonalesForm, operativo: PerfilOperativoForm): number {
   let filled = 0;
-  const total = 20;
+  const total = 10;
 
   if (datos.nombreCompleto) filled++;
   if (datos.cuil) filled++;
   if (datos.fechaNacimiento) filled++;
   if (datos.telefono) filled++;
-  if (datos.email) filled++;
   if (datos.localidad) filled++;
-  if (operativo.situacionLaboral) filled++;
+  if (datos.domicilio) filled++;
+  if (operativo.oficio) filled++;
+  if (operativo.experienciaMineria) filled++;
   if (operativo.diagramaRoster) filled++;
   if (operativo.pernocteCampamento !== null) filled++;
-  if (operativo.experienciaMineria) filled++;
-  if (credenciales.oficio) filled++;
-  if (credenciales.licenciaConducir) filled++;
-  if (credenciales.nivelEducacion) filled++;
-  if (credenciales.certificaciones.length > 0) filled++;
-  documentos.forEach((d) => {
-    if (d.estado === 'aprobado') filled++;
-    else if (d.estado === 'en_revision') filled += 0.5;
-  });
 
   return Math.round((filled / total) * 100);
 }
 
 export function ProfesionalPerfilPage() {
-  const { perfiles, addToast } = useApp();
-  const perfilActual = perfiles.find((p) => p.tipo === 'profesional') || perfiles[0];
+  const { user, profile } = useAuth();
+  const { addToast } = useApp();
+  const uid = user?.uid ?? '';
 
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('datos');
-  const [datos, setDatos] = useState<DatosPersonalesForm>(() => ({
-    ...initialDatos,
-    nombreCompleto: perfilActual?.nombre || '',
-    telefono: perfilActual?.telefono || '',
-    email: perfilActual?.email || '',
-    localidad: perfilActual?.localidad || '',
-  }));
+  const [datos, setDatos] = useState<DatosPersonalesForm>(initialDatos);
   const [operativo, setOperativo] = useState<PerfilOperativoForm>(initialOperativo);
-  const [credenciales, setCredenciales] = useState<CredencialesTecnicasForm>(() => ({
-    ...initialCredenciales,
-    oficio: perfilActual?.oficio || '',
-  }));
-  const [documentos, setDocumentos] = useState<DocumentoEstado[]>(DOCUMENTOS_INICIALES);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const p = await getProfesionalProfile(uid);
+        if (cancelled) return;
+        if (p) {
+          setDatos({
+            nombreCompleto: p.nombre ?? '',
+            cuil: p.cuil ?? '',
+            fechaNacimiento: p.fechaNacimiento ?? '',
+            telefono: p.telefono ?? '',
+            email: p.email ?? '',
+            localidad: p.localidad ?? '',
+            domicilio: p.domicilio ?? '',
+          });
+          setOperativo({
+            oficio: p.oficio ?? '',
+            experienciaMineria: p.experienciaMineria ?? '',
+            diagramaRoster: p.diagramaRoster ?? '',
+            pernocteCampamento: p.pernocteCampamento ?? null,
+          });
+        } else if (profile) {
+          setDatos((prev) => ({
+            ...prev,
+            nombreCompleto: profile.nombre ?? prev.nombreCompleto,
+            email: profile.email ?? prev.email,
+          }));
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) addToast('Error al cargar el perfil.', 'error');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [uid, profile?.nombre, profile?.email, addToast]);
 
   const progress = useMemo(
-    () => calcProgress(datos, operativo, credenciales, documentos),
-    [datos, operativo, credenciales, documentos]
+    () => calcProgress(datos, operativo),
+    [datos, operativo]
   );
 
-  const handleGuardar = () => {
-    addToast('Perfil guardado correctamente.');
+  const handleGuardar = async () => {
+    if (!uid) return;
+    setSaving(true);
+    try {
+      await createOrUpdateProfile(uid, 'profesional', {
+        nombre: datos.nombreCompleto,
+        cuil: datos.cuil || undefined,
+        fechaNacimiento: datos.fechaNacimiento || undefined,
+        telefono: datos.telefono || undefined,
+        email: datos.email || undefined,
+        localidad: datos.localidad || '',
+        domicilio: datos.domicilio || undefined,
+        oficio: operativo.oficio || undefined,
+        experienciaMineria: operativo.experienciaMineria || undefined,
+        diagramaRoster: operativo.diagramaRoster || undefined,
+        pernocteCampamento: operativo.pernocteCampamento ?? undefined,
+      });
+      addToast('Perfil guardado correctamente.');
+    } catch (err) {
+      console.error(err);
+      addToast('Error al guardar el perfil.', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleFileSelect = (docId: string, _file: File) => {
-    setDocumentos((prev) =>
-      prev.map((d) => (d.id === docId ? { ...d, estado: 'en_revision' as const } : d))
+  if (loading) {
+    return (
+      <div className="py-16 flex justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+      </div>
     );
-    addToast('Documento cargado. Será validado por el equipo.');
-  };
+  }
 
   return (
     <div className="py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Barra de progreso */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-slate-700">
               Perfil completado: <strong>{progress}%</strong>
@@ -133,7 +164,7 @@ export function ProfesionalPerfilPage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="flex border-b border-slate-200 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -167,26 +198,20 @@ export function ProfesionalPerfilPage() {
                 onChange={(field, value) => setOperativo((p) => ({ ...p, [field]: value }))}
               />
             )}
-            {activeTab === 'credenciales' && (
-              <TabCredencialesTecnicas
-                form={credenciales}
-                onChange={(field, value) =>
-                  setCredenciales((p) => ({ ...p, [field]: value }))
-                }
-              />
-            )}
-            {activeTab === 'documentacion' && (
-              <TabDocumentacion documentos={documentos} onFileSelect={handleFileSelect} />
-            )}
+            {activeTab === 'compliance' && <TabComplianceProfesional />}
 
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <button
-                onClick={handleGuardar}
-                className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-500 transition"
-              >
-                Guardar cambios
-              </button>
-            </div>
+            {activeTab !== 'compliance' && (
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <button
+                  onClick={handleGuardar}
+                  disabled={saving}
+                  className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-500 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

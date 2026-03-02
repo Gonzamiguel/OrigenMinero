@@ -1,9 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { useMockAuth } from '../context/MockAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getLinksForRole } from '../config/dashboardLinks';
 
 export function DashboardLayout() {
-  const { userRole, canViewLicitaciones } = useMockAuth();
+  const { userRole, canViewLicitaciones } = useAuth();
   const location = useLocation();
   const links = getLinksForRole(userRole, canViewLicitaciones);
 

@@ -3,12 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { TarjetaPerfil } from '../components/TarjetaPerfil';
 import { LOCALIDADES, RUBROS_B2B } from '../data/mockData';
 import { useApp } from '../context/AppContext';
-import { useMockAuth } from '../context/MockAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ProveedoresPage() {
   const [searchParams] = useSearchParams();
   const { perfiles } = useApp();
-  const { canViewContacts } = useMockAuth();
+  const { canViewContacts } = useAuth();
   const [localidad, setLocalidad] = useState(searchParams.get('localidad') || '');
   const [rubro, setRubro] = useState('');
   const [soloValidados, setSoloValidados] = useState(false);

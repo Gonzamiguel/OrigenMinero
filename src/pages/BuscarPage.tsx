@@ -3,13 +3,13 @@ import { X, Download, Phone } from 'lucide-react';
 import { SemaforoLegal } from '../components/SemaforoLegal';
 import { LOCALIDADES, RUBROS_B2B, OFICIOS_B2C } from '../data/mockData';
 import { useApp } from '../context/AppContext';
-import { useMockAuth } from '../context/MockAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { descargarLegajo } from '../utils/descargarLegajo';
 import type { Perfil } from '../types';
 
 export function BuscarPage() {
   const { perfiles, historialDocumentos, addToast } = useApp();
-  const { canViewContacts } = useMockAuth();
+  const { canViewContacts } = useAuth();
   const [localidad, setLocalidad] = useState('');
   const [rubro, setRubro] = useState('');
   const [tipo, setTipo] = useState<'proveedor' | 'profesional'>('proveedor');

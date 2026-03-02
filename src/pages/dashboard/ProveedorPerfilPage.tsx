@@ -53,7 +53,7 @@ function calcProgress(
 }
 
 export function ProveedorPerfilPage() {
-  const { perfiles, cargarDocumento, addToast } = useApp();
+  const { perfiles, addToast } = useApp();
   const perfilActual = perfiles.find((p) => p.tipo === 'proveedor' && p.id === '1') || perfiles.find((p) => p.tipo === 'proveedor') || perfiles[0];
 
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('corporativos');
@@ -89,18 +89,14 @@ export function ProveedorPerfilPage() {
   }, [perfilActual?.semaforo]);
 
   const docsAprobados = documentos.filter((d) => d.estado === 'aprobado').length;
+  const docsTotal = documentos.length;
   const progress = useMemo(
-    () => calcProgress(datos, operativa, certificaciones, docsAprobados, documentos.length),
-    [datos, operativa, certificaciones, docsAprobados, documentos.length]
+    () => calcProgress(datos, operativa, certificaciones, docsAprobados, docsTotal),
+    [datos, operativa, certificaciones, docsAprobados, docsTotal]
   );
 
   const handleGuardar = () => {
     addToast('Perfil corporativo guardado correctamente.');
-  };
-
-  const handleFileSelect = (tipoDocumento: TipoDocumento, file: File) => {
-    if (!perfilActual) return;
-    cargarDocumento(perfilActual.id, tipoDocumento, file);
   };
 
   return (
@@ -167,12 +163,7 @@ export function ProveedorPerfilPage() {
                 onChange={(field, value) => setCertificaciones((p) => ({ ...p, [field]: value }))}
               />
             )}
-            {activeTab === 'compliance' && (
-              <TabComplianceLegal
-                documentos={documentos}
-                onFileSelect={handleFileSelect}
-              />
-            )}
+            {activeTab === 'compliance' && <TabComplianceLegal />}
 
             <div className="mt-8 pt-6 border-t border-slate-200">
               <button
