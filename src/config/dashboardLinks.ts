@@ -11,6 +11,9 @@ import {
   Building2,
   Users,
   AlertTriangle,
+  Star,
+  Briefcase,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '../lib/firebase/types';
@@ -34,9 +37,10 @@ export const DASHBOARD_LINKS: DashboardLink[] = [
   { to: '/dashboard/profesional/perfil', label: 'Mi Perfil Profesional', icon: UserCircle, roles: ['profesional'] },
   { to: '/dashboard/profesional/historial', label: 'Historial de archivos', icon: History, roles: ['profesional'] },
   { to: '/dashboard/profesional?tab=licitaciones', label: 'Licitaciones', icon: Gavel, roles: ['profesional'] },
-  { to: '/dashboard/minera', label: 'Buscador', icon: Search, roles: ['minera'] },
-  { to: '/dashboard/minera?tab=rse', label: 'RSE', icon: FileText, roles: ['minera'] },
-  { to: '/dashboard/minera?tab=licitaciones', label: 'Licitaciones', icon: Gavel, roles: ['minera'] },
+  { to: '/dashboard/empresa/buscar', label: 'Buscador de Red', icon: Search, roles: ['minera'] },
+  { to: '/dashboard/empresa/favoritos', label: 'Mis Favoritos', icon: Star, roles: ['minera'] },
+  { to: '/dashboard/empresa/nomina', label: 'Mi Nómina', icon: ShieldCheck, roles: ['minera'] },
+  { to: '/dashboard/empresa/licitaciones', label: 'Mis Licitaciones', icon: Briefcase, roles: ['minera'] },
   { to: '/dashboard/auditor/panel', label: 'Panel de Control', icon: LayoutDashboard, roles: ['auditor'] },
   { to: '/dashboard/auditor/directorio', label: 'Directorio', icon: Users, roles: ['auditor'] },
   { to: '/dashboard/auditor/vencimientos', label: 'Vencimientos', icon: AlertTriangle, roles: ['auditor'] },
@@ -59,7 +63,7 @@ export function getNavbarDashboardLink(role: RoleOrGuest): DashboardLink | null 
   const entryPoints: Record<string, DashboardLink> = {
   proveedor: { to: '/dashboard/documentos', label: 'Mi Panel', icon: User, roles: ['proveedor'] },
   profesional: { to: '/dashboard/profesional/documentos', label: 'Mi Panel', icon: User, roles: ['profesional'] },
-    minera: { to: '/dashboard/minera', label: 'Mi Panel', icon: Search, roles: ['minera'] },
+    minera: { to: '/dashboard/empresa/buscar', label: 'Mi Panel', icon: Search, roles: ['minera'] },
     auditor: { to: '/dashboard/auditor/panel', label: 'Mi Panel', icon: LayoutDashboard, roles: ['auditor'] },
     admin: { to: '/admin-gonzalo', label: 'Admin', icon: Settings, roles: ['admin'] },
   };

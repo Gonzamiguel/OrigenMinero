@@ -4,10 +4,11 @@ import { TarjetaPerfil } from '../components/TarjetaPerfil';
 import { LOCALIDADES, RUBROS_B2B } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../contexts/AuthContext';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 export function ProveedoresPage() {
   const [searchParams] = useSearchParams();
-  const { perfiles } = useApp();
+  const { perfiles, perfilesLoading, perfilesError, refreshPerfiles } = useApp();
   const { canViewContacts } = useAuth();
   const [localidad, setLocalidad] = useState(searchParams.get('localidad') || '');
   const [rubro, setRubro] = useState('');
@@ -24,6 +25,31 @@ export function ProveedoresPage() {
         .filter((p) => !selloSustentable || p.selloSustentable),
     [perfiles, localidad, rubro, soloValidados, selloSustentable]
   );
+
+  if (perfilesLoading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex justify-center items-center">
+        <Loader2 className="w-10 h-10 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (perfilesError) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex justify-center items-center p-8">
+        <div className="bg-white rounded-xl border border-red-200 p-6 text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-700 font-medium">{perfilesError}</p>
+          <button
+            onClick={refreshPerfiles}
+            className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 py-8 px-4 flex flex-col">

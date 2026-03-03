@@ -20,7 +20,11 @@ import { ProveedorDashboardPage } from './pages/dashboard/ProveedorDashboardPage
 import { ProveedorPerfilPage } from './pages/dashboard/ProveedorPerfilPage';
 import { ProfesionalDashboardPage } from './pages/dashboard/ProfesionalDashboardPage';
 import { ProfesionalPerfilPage } from './pages/dashboard/ProfesionalPerfilPage';
-import { MineraDashboardPage } from './pages/dashboard/MineraDashboardPage';
+import { EmpresaBuscarPage } from './pages/dashboard/empresa/EmpresaBuscarPage';
+import { EmpresaFavoritosPage } from './pages/dashboard/empresa/EmpresaFavoritosPage';
+import { EmpresaLicitacionesPage } from './pages/dashboard/empresa/EmpresaLicitacionesPage';
+import { EmpresaPerfilDetallePage } from './pages/dashboard/empresa/EmpresaPerfilDetallePage';
+import { EmpresaNominaPage } from './pages/dashboard/empresa/EmpresaNominaPage';
 import { AuditorPendientesPage } from './pages/dashboard/auditor/AuditorPendientesPage';
 import { AuditorCompletadasPage } from './pages/dashboard/auditor/AuditorCompletadasPage';
 import { AuditorPanelPage } from './pages/dashboard/auditor/AuditorPanelPage';
@@ -122,12 +126,52 @@ function App() {
                     }
                   />
                   <Route
-                    path="minera"
+                    path="empresa"
+                    element={<Navigate to="/dashboard/empresa/buscar" replace />}
+                  />
+                  <Route
+                    path="empresa/buscar"
                     element={
                       <ProtectedRoute allowedRoles={['minera']}>
-                        <MineraDashboardPage />
+                        <EmpresaBuscarPage />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="empresa/favoritos"
+                    element={
+                      <ProtectedRoute allowedRoles={['minera']}>
+                        <EmpresaFavoritosPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="empresa/nomina"
+                    element={
+                      <ProtectedRoute allowedRoles={['minera']}>
+                        <EmpresaNominaPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="empresa/licitaciones"
+                    element={
+                      <ProtectedRoute allowedRoles={['minera']}>
+                        <EmpresaLicitacionesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="empresa/perfil/:id"
+                    element={
+                      <ProtectedRoute allowedRoles={['minera']}>
+                        <EmpresaPerfilDetallePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="minera"
+                    element={<Navigate to="/dashboard/empresa/buscar" replace />}
                   />
                   <Route
                     path="auditor/panel"

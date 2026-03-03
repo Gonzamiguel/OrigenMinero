@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, LayoutDashboard, FileCheck, CheckCircle2, XCircle, Building2 } from 'lucide-react';
+import { Loader2, LayoutDashboard, FileCheck, CheckCircle2, Building2 } from 'lucide-react';
 import { getDashboardMetrics, type AuditorMetrics } from '../../../lib/firebase/auditorService';
 import { useApp } from '../../../context/AppContext';
 

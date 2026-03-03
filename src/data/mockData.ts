@@ -365,9 +365,10 @@ export const PERFILES: Perfil[] = [
 
 export const PARTNERS = [
   { id: '1', nombre: 'Sun Solutions', src: '/logos/sun-solutions.png', alt: 'Sun Solutions' },
-  { id: '2', nombre: 'CADEMI', src: '/logos/cademi.png', alt: 'CADEMI' },
-  { id: '3', nombre: 'Gobierno de San Juan', src: '/logos/gobierno-sanjuan.png', alt: 'Gobierno de San Juan' },
-  { id: '4', nombre: 'Mujer en la Minería', src: '/logos/mujer-mineria.png', alt: 'Mujer en la Minería' },
+  { id: '2', nombre: 'Flowper Consulting', src: '/logos/flowper-consulting.png', alt: 'Flowper Consulting' },
+  { id: '3', nombre: 'CADEMI', src: '/logos/cademi.png', alt: 'CADEMI' },
+  { id: '4', nombre: 'Gobierno de San Juan', src: '/logos/gobierno-sanjuan.png', alt: 'Gobierno de San Juan' },
+  { id: '5', nombre: 'Mujer en la Minería', src: '/logos/mujer-mineria.png', alt: 'Mujer en la Minería' },
 ];
 
 export const PROYECTOS_RSE: ProyectoRSE[] = [

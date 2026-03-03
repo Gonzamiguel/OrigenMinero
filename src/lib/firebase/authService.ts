@@ -5,6 +5,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './config';
+import { createOrUpdateProfile } from './db';
 
 /** Roles permitidos SOLO en registro público. minera, auditor, admin se crean manualmente. */
 export type PublicRole = 'proveedor' | 'profesional';
@@ -38,6 +39,12 @@ export async function registerUser(
     role,
     nombre: nombre.trim(),
     createdAt: serverTimestamp(),
+  });
+
+  await createOrUpdateProfile(user.uid, role, {
+    nombre: nombre.trim(),
+    localidad: '',
+    empresa: role === 'proveedor' ? nombre.trim() : undefined,
   });
 
   return user.uid;

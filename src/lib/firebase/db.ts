@@ -12,17 +12,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
 import type { UserRole } from './types';
 import type { UserProfile } from './types';
-import type { ComplianceDocument, TipoDocumentoCompliance } from './types';
+import type { ComplianceDocument, TipoDocumentoCompliance, TipoDocumentoESG, EstadoSelloVerde } from './types';
 
 const COL_PERFILES_PROVEEDORES = 'perfiles_proveedores';
 const COL_PERFILES_PROFESIONALES = 'perfiles_profesionales';
 const COL_DOCUMENTOS = 'documentos';
 
-/** Guarda o actualiza el perfil según el rol. */
+/** Guarda o actualiza el perfil según el rol. Acepta campos extra para proveedores (CUIT, certificaciones, etc.). */
 export async function createOrUpdateProfile(
   uid: string,
   role: UserRole,
-  data: Partial<UserProfile>
+  data: Partial<UserProfile> & Record<string, unknown>
 ): Promise<void> {
   try {
     const col = role === 'proveedor' ? COL_PERFILES_PROVEEDORES : COL_PERFILES_PROFESIONALES;
@@ -71,6 +71,40 @@ export async function uploadComplianceDocument(
   }
 }
 
+/** Sube un documento ESG (PDF) a Storage y crea registro en documentos. */
+export async function uploadESGDocument(
+  uid: string,
+  file: File,
+  tipoDocumento: TipoDocumentoESG
+): Promise<string> {
+  try {
+    const ext = file.name.split('.').pop() || 'pdf';
+    const filename = `esg_${tipoDocumento}_${Date.now()}.${ext}`;
+    const storageRef = ref(storage, `documentos_esg/${uid}/${filename}`);
+
+    await uploadBytes(storageRef, file);
+    const fileUrl = await getDownloadURL(storageRef);
+
+    const docRef = doc(collection(db, COL_DOCUMENTOS));
+    await setDoc(docRef, {
+      owner_uid: uid,
+      userId: uid,
+      tipoDocumento,
+      categoria: 'esg',
+      fileUrl,
+      fileName: file.name,
+      estado: 'pendiente',
+      fechaVencimiento: null,
+      updatedAt: serverTimestamp(),
+    });
+
+    return docRef.id;
+  } catch (err) {
+    console.error('Error uploadESGDocument:', err);
+    throw err;
+  }
+}
+
 /** Obtiene el perfil profesional desde Firestore. */
 export async function getProfesionalProfile(uid: string): Promise<Partial<UserProfile> | null> {
   try {
@@ -80,6 +114,48 @@ export async function getProfesionalProfile(uid: string): Promise<Partial<UserPr
     return null;
   } catch (err) {
     console.error('Error getProfesionalProfile:', err);
+    throw err;
+  }
+}
+
+/** Obtiene el perfil de proveedor desde Firestore. */
+export async function getProveedorProfile(uid: string): Promise<Record<string, unknown> | null> {
+  try {
+    const docRef = doc(db, COL_PERFILES_PROVEEDORES, uid);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) return snap.data() as Record<string, unknown>;
+    return null;
+  } catch (err) {
+    console.error('Error getProveedorProfile:', err);
+    throw err;
+  }
+}
+
+/** Actualiza el estado del Sello Verde ESG en el perfil del proveedor. */
+export async function updateProveedorESGSello(
+  uid: string,
+  estadoSello: EstadoSelloVerde
+): Promise<void> {
+  try {
+    const docRef = doc(db, COL_PERFILES_PROVEEDORES, uid);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Perfil no encontrado');
+    const data = snap.data();
+    const esg = (data?.esg as Record<string, unknown>) ?? {};
+    await setDoc(
+      docRef,
+      {
+        esg: {
+          ...esg,
+          estadoSello,
+          fechaAuditoria: serverTimestamp(),
+        },
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.error('Error updateProveedorESGSello:', err);
     throw err;
   }
 }

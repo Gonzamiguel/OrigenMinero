@@ -33,6 +33,13 @@ export interface UserProfile {
 
 export type TipoDocumentoCompliance = 'afip' | 'art' | 'seguro' | 'mipyme' | 'libre_deuda' | 'residencia';
 
+export type TipoDocumentoESG =
+  | 'politica_medio_ambiente'
+  | 'codigo_etica'
+  | 'reporte_sustentabilidad';
+
+export type EstadoSelloVerde = 'incompleto' | 'en_revision' | 'sello_otorgado' | 'rechazado';
+
 export interface ComplianceDocument {
   id?: string;
   owner_uid: string;

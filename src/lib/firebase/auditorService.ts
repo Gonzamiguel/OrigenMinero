@@ -58,6 +58,44 @@ export interface DocumentoConVencimiento {
   fechaVencimiento: Timestamp | null;
   fechaSubida: Timestamp | null;
   updatedAt: Timestamp | null;
+  /** Nombre o razón social del usuario (enriquecido desde users/perfiles). */
+  nombre?: string;
+  /** Email del usuario (enriquecido desde users). */
+  email?: string;
+}
+
+export interface UserDisplayInfo {
+  nombre: string;
+  email: string;
+}
+
+/** Obtiene nombre/razón social y email para mostrar en la UI. */
+export async function getUserDisplayInfo(userId: string): Promise<UserDisplayInfo> {
+  if (!userId) return { nombre: '-', email: '-' };
+  try {
+    const userSnap = await getDoc(doc(db, COL_USERS, userId));
+    const email = userSnap.exists() ? (userSnap.data()?.email as string) ?? '-' : '-';
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      const nombre = (data?.nombre ?? data?.displayName ?? data?.empresa ?? '') as string;
+      if (nombre) return { nombre, email };
+    }
+    const provSnap = await getDoc(doc(db, COL_PERFILES_PROVEEDORES, userId));
+    const profSnap = await getDoc(doc(db, COL_PERFILES_PROFESIONALES, userId));
+    if (provSnap.exists()) {
+      const d = provSnap.data();
+      const nombre = (d?.razonSocial ?? d?.empresa ?? d?.nombre ?? 'Proveedor') as string;
+      return { nombre: nombre || 'Proveedor', email };
+    }
+    if (profSnap.exists()) {
+      const d = profSnap.data();
+      const nombre = (d?.nombre ?? 'Profesional') as string;
+      return { nombre: nombre || 'Profesional', email };
+    }
+    return { nombre: userId.slice(0, 8) + '...', email };
+  } catch {
+    return { nombre: '-', email: '-' };
+  }
 }
 
 /** Métricas principales para el panel del auditor. */
@@ -164,18 +202,19 @@ export async function getDocumentsByUser(userId: string) {
     .map((d) => ({ id: d.id, ...d.data() }));
 }
 
-/** Documentos aprobados con fecha de vencimiento. */
+/** Documentos aprobados con fecha de vencimiento. Incluye nombre y email del usuario. */
 export async function getApprovedDocumentsWithExpiry(): Promise<DocumentoConVencimiento[]> {
   const snap = await getDocs(query(collection(db, COL_DOCUMENTOS), where('estado', '==', 'aprobado')));
 
-  return snap.docs
+  const docs = snap.docs
     .map((d) => {
       const data = d.data();
       const fechaVencimiento = (data.fechaVencimiento as Timestamp) ?? null;
       if (!fechaVencimiento) return null;
+      const userId = (data.userId as string) ?? (data.owner_uid as string) ?? '';
       return {
         id: d.id,
-        userId: (data.userId as string) ?? (data.owner_uid as string) ?? '',
+        userId,
         tipoDocumento: data.tipoDocumento ?? '',
         estado: data.estado ?? 'aprobado',
         fileUrl: data.fileUrl,
@@ -185,6 +224,20 @@ export async function getApprovedDocumentsWithExpiry(): Promise<DocumentoConVenc
       } as DocumentoConVencimiento;
     })
     .filter(Boolean) as DocumentoConVencimiento[];
+
+  const userIds = [...new Set(docs.map((d) => d.userId).filter(Boolean))];
+  const userMap = new Map<string, UserDisplayInfo>();
+  await Promise.all(
+    userIds.map(async (uid) => {
+      userMap.set(uid, await getUserDisplayInfo(uid));
+    })
+  );
+
+  return docs.map((d) => ({
+    ...d,
+    nombre: userMap.get(d.userId)?.nombre ?? '-',
+    email: userMap.get(d.userId)?.email ?? '-',
+  }));
 }
 
 /** Cambia el estado de un documento (incluye `vencido`). */

@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Leaf, MapPin, Lock, Phone, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BadgeCheck, Leaf, MapPin, Lock, Phone, Download, Loader2 } from 'lucide-react';
 import { SemaforoLegal } from '../components/SemaforoLegal';
 import { ContactoBloqueado } from '../components/ContactoBloqueado';
 import { DossierProfesionalMinera } from '../components/DossierProfesionalMinera';
@@ -7,13 +8,62 @@ import { DossierProveedorMinera } from '../components/DossierProveedorMinera';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 import { descargarLegajo } from '../utils/descargarLegajo';
+import { getPerfilById } from '../lib/firebase/networkService';
+import { getDocumentsByUser } from '../lib/firebase/auditorService';
+import type { Perfil, HistorialDocumento } from '../types';
+
+function mapDocsToHistorial(docs: unknown[], perfilId: string): HistorialDocumento[] {
+  return (docs as Array<{ id: string; tipoDocumento?: string; fileName?: string; nombreOriginal?: string; estado?: string; updatedAt?: { toMillis?: () => number } }>).map(
+    (d) => ({
+      id: d.id,
+      perfilId,
+      tipoDocumento: (d.tipoDocumento ?? 'otro') as HistorialDocumento['tipoDocumento'],
+      nombreArchivo: d.fileName ?? d.nombreOriginal ?? 'documento.pdf',
+      fechaCarga: d.updatedAt?.toMillis ? new Date(d.updatedAt.toMillis()).toISOString() : new Date().toISOString(),
+      estado: (d.estado === 'aprobado' ? 'aprobado' : d.estado === 'rechazado' ? 'rechazado' : 'en_revision') as HistorialDocumento['estado'],
+      fechaResolucion: d.estado === 'aprobado' && d.updatedAt?.toMillis
+        ? new Date(d.updatedAt.toMillis()).toISOString()
+        : undefined,
+    })
+  );
+}
 
 export function PerfilPublicoPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { perfiles, historialDocumentos, addToast } = useApp();
+  const { perfiles, perfilesLoading, historialDocumentos, addToast } = useApp();
   const { canViewContacts, userRole } = useAuth();
-  const perfil = perfiles.find((p) => p.id === id);
+  const [perfilExterno, setPerfilExterno] = useState<Perfil | null>(null);
+  const [historialFirebase, setHistorialFirebase] = useState<HistorialDocumento[]>([]);
+
+  const perfil = perfiles.find((p) => p.id === id) ?? perfilExterno;
+
+  useEffect(() => {
+    if (!id) return;
+    const enLista = perfiles.find((p) => p.id === id);
+    if (enLista) {
+      setPerfilExterno(null);
+      getDocumentsByUser(id).then((docs) => setHistorialFirebase(mapDocsToHistorial(docs, id)));
+      return;
+    }
+    getPerfilById(id).then((p) => {
+      setPerfilExterno(p ?? null);
+      if (p) getDocumentsByUser(id).then((docs) => setHistorialFirebase(mapDocsToHistorial(docs, id)));
+    });
+  }, [id, perfiles]);
+
+  const historialFiltrado =
+    historialFirebase.length > 0
+      ? historialFirebase
+      : historialDocumentos.filter((h) => h.perfilId === id);
+
+  if (perfilesLoading && !perfil) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex justify-center items-center">
+        <Loader2 className="w-10 h-10 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   if (!perfil) {
     return (
@@ -25,7 +75,6 @@ export function PerfilPublicoPage() {
 
   // Minera viendo profesional: Dossier Digital de Compliance
   if (userRole === 'minera' && perfil.tipo === 'profesional') {
-    const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
     return (
       <DossierProfesionalMinera
         perfil={perfil}
@@ -38,7 +87,6 @@ export function PerfilPublicoPage() {
 
   // Minera viendo proveedor: Dossier B2B de Auditoría
   if (userRole === 'minera' && perfil.tipo === 'proveedor') {
-    const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
     return (
       <DossierProveedorMinera
         perfil={perfil}
@@ -113,13 +161,13 @@ export function PerfilPublicoPage() {
                 )}
                 {(() => {
                   const docsOk = Object.values(perfil.semaforo).every((e) => e === 'ok');
+                  const hist = historialFiltrado;
                   return docsOk ? (
                     <button
                       onClick={async () => {
                         addToast(`Descargando legajo de ${perfil.empresa || perfil.nombre}...`, 'info');
                         try {
-                          const historialFiltrado = historialDocumentos.filter((h) => h.perfilId === perfil.id);
-                          await descargarLegajo(perfil, historialFiltrado);
+                          await descargarLegajo(perfil, hist);
                           addToast('Legajo descargado correctamente.');
                         } catch {
                           addToast('Error al descargar el legajo.', 'error');

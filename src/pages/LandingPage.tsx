@@ -9,6 +9,7 @@ import {
   Zap,
   ArrowRight,
 } from 'lucide-react';
+import { LogoLoop } from '../components/LogoLoop';
 import { PARTNERS } from '../data/mockData';
 
 /** Imágenes de fondo del hero (slider). */
@@ -180,7 +181,46 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 3. Cuadrícula de Beneficios (Grid 2x2) */}
+      {/* 3. Banner de Confianza (Social Proof) - Slider infinito */}
+      <section className="py-16 px-4 bg-slate-100 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest text-center mb-10">
+            Auditoría y compliance respaldados por
+          </p>
+          <div className="flex justify-center">
+            <LogoLoop
+              logos={PARTNERS.map((p) => ({
+                src: p.src,
+                alt: p.alt,
+                title: p.nombre,
+              }))}
+              speed={80}
+              direction="left"
+              logoHeight={64}
+              gap={48}
+              width="100%"
+              ariaLabel="Logos de partners y organismos de respaldo"
+              renderItem={(item) => {
+                if ('src' in item) {
+                  return (
+                    <div className="h-16 min-w-[140px] bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm px-6 py-4 shrink-0">
+                      <img
+                        src={item.src}
+                        alt={item.alt ?? ''}
+                        title={item.title}
+                        className="max-h-12 max-w-[120px] object-contain"
+                      />
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Cuadrícula de Beneficios (Grid 2x2) */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-16">
@@ -203,7 +243,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Cómo Funciona (Step-by-step) */}
+      {/* 5. Cómo Funciona (Step-by-step) */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-16">
@@ -217,30 +257,6 @@ export function LandingPage() {
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg mb-2">{titulo}</h3>
                 <p className="text-slate-600 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Banner de Confianza (Social Proof) */}
-      <section className="py-16 px-4 bg-slate-100">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest text-center mb-10">
-            Auditoría y compliance respaldados por
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-12">
-            {PARTNERS.slice(0, 4).map((p) => (
-              <div
-                key={p.id}
-                className="h-14 min-w-[120px] bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm opacity-80 hover:opacity-100 transition-all px-4"
-              >
-                <img
-                  src={p.src}
-                  alt={p.alt}
-                  title={p.nombre}
-                  className="max-h-8 max-w-24 object-contain"
-                />
               </div>
             ))}
           </div>

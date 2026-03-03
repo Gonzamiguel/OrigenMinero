@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const PATH_BY_ROLE: Record<string, string> = {
   proveedor: '/dashboard/documentos',
   profesional: '/dashboard/profesional/documentos',
-  minera: '/dashboard/minera',
+  minera: '/dashboard/empresa/buscar',
   auditor: '/dashboard/auditor/pendientes',
   admin: '/admin-gonzalo',
 };

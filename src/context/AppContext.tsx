@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Perfil, ProyectoRSE, Licitacion, PerfilAuditoria, DocumentoAuditoria, HistorialDocumento, TipoDocumento } from '../types';
 import {
-  PERFILES,
   PROYECTOS_RSE,
   LICITACIONES,
   PERFILES_AUDITORIA,
 } from '../data/mockData';
+import { getPerfilesRed } from '../lib/firebase/networkService';
 
 interface Toast {
   id: string;
@@ -17,6 +17,9 @@ interface Toast {
 interface AppContextType {
   user: { id: string; tipo: 'proveedor' | 'minera' | 'admin' } | null;
   perfiles: Perfil[];
+  perfilesLoading: boolean;
+  perfilesError: string | null;
+  refreshPerfiles: () => Promise<void>;
   proyectosRSE: ProyectoRSE[];
   licitaciones: Licitacion[];
   perfilesAuditoria: PerfilAuditoria[];
@@ -40,7 +43,28 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppContextType['user']>({ id: '1', tipo: 'proveedor' });
-  const [perfiles, setPerfiles] = useState<Perfil[]>(PERFILES);
+  const [perfiles, setPerfiles] = useState<Perfil[]>([]);
+  const [perfilesLoading, setPerfilesLoading] = useState(true);
+  const [perfilesError, setPerfilesError] = useState<string | null>(null);
+
+  const refreshPerfiles = useCallback(async () => {
+    setPerfilesLoading(true);
+    setPerfilesError(null);
+    try {
+      const data = await getPerfilesRed();
+      setPerfiles(data);
+    } catch (err) {
+      console.error('Error cargando perfiles:', err);
+      setPerfilesError(err instanceof Error ? err.message : 'Error al cargar perfiles');
+      setPerfiles([]);
+    } finally {
+      setPerfilesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshPerfiles();
+  }, [refreshPerfiles]);
   const [proyectosRSE, setProyectosRSE] = useState<ProyectoRSE[]>(PROYECTOS_RSE);
   const [licitaciones, setLicitaciones] = useState<Licitacion[]>(LICITACIONES);
   const [perfilesAuditoria, setPerfilesAuditoria] = useState<PerfilAuditoria[]>(PERFILES_AUDITORIA);
@@ -216,6 +240,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         perfiles,
+        perfilesLoading,
+        perfilesError,
+        refreshPerfiles,
         proyectosRSE,
         licitaciones,
         perfilesAuditoria,

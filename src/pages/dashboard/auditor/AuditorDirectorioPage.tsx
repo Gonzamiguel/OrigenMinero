@@ -204,8 +204,8 @@ export function AuditorDirectorioPage() {
             className="absolute inset-0 bg-black/50 transition-opacity"
             onClick={() => setSelected(null)}
           />
-          <div className="fixed inset-y-0 right-0 z-[110] w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out translate-x-0">
-            <div className="flex justify-between items-start gap-4 mb-6 px-6 py-4 border-b border-slate-200 bg-white sticky top-0">
+          <div className="fixed inset-y-0 right-0 z-[110] w-full max-w-2xl flex flex-col h-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out translate-x-0">
+            <div className="flex-shrink-0 flex justify-between items-start gap-4 px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-slate-500 uppercase tracking-wide">Ficha 360</p>
                 <h2 className="text-2xl font-bold text-slate-900 truncate">
@@ -232,7 +232,7 @@ export function AuditorDirectorioPage() {
               </div>
             </div>
 
-            <div className="h-[calc(100vh-64px)] overflow-y-auto p-6 space-y-6">
+            <div className="relative flex-1 overflow-y-auto px-4 sm:px-6 pt-6 pb-12 space-y-6">
               {detail.loading ? (
                 <div className="flex justify-center py-10">
                   <Loader2 className="w-8 h-8 animate-spin text-slate-400" />

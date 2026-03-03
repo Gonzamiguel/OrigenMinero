@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react';
-import { Building2, HardHat, Award, Scale } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Building2, HardHat, Award, Scale, Loader2, Leaf } from 'lucide-react';
 import { TabDatosCorporativos, type DatosCorporativosForm } from './proveedor/TabDatosCorporativos';
 import { TabCapacidadOperativa, type CapacidadOperativaForm } from './proveedor/TabCapacidadOperativa';
 import { TabCertificacionesCalidad, type CertificacionesCalidadForm } from './proveedor/TabCertificacionesCalidad';
 import { TabComplianceLegal } from './proveedor/TabComplianceLegal';
+import { ProveedorESG } from './proveedor/ProveedorESG';
 import { DOCUMENTOS_PROVEEDOR } from '../../data/mockData';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { getProveedorProfile, createOrUpdateProfile } from '../../lib/firebase/db';
 import type { TipoDocumento } from '../../types';
 
 const TABS = [
@@ -13,6 +16,7 @@ const TABS = [
   { id: 'operativa', label: 'Capacidad Operativa', icon: HardHat },
   { id: 'certificaciones', label: 'Certificaciones y Calidad', icon: Award },
   { id: 'compliance', label: 'Compliance Legal', icon: Scale },
+  { id: 'sustentabilidad', label: 'Impacto y RSE', icon: Leaf },
 ] as const;
 
 type EstadoDoc = 'pendiente' | 'en_revision' | 'aprobado';
@@ -53,37 +57,74 @@ function calcProgress(
 }
 
 export function ProveedorPerfilPage() {
-  const { perfiles, addToast } = useApp();
-  const perfilActual = perfiles.find((p) => p.tipo === 'proveedor' && p.id === '1') || perfiles.find((p) => p.tipo === 'proveedor') || perfiles[0];
+  const { perfiles, addToast, refreshPerfiles } = useApp();
+  const { user } = useAuth();
+  const uid = user?.uid ?? '';
+  const perfilActual = perfiles.find((p) => p.tipo === 'proveedor' && p.id === uid) || perfiles.find((p) => p.tipo === 'proveedor');
 
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('corporativos');
-  const [datos, setDatos] = useState<DatosCorporativosForm>(() => ({
-    razonSocial: perfilActual?.empresa || '',
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [datos, setDatos] = useState<DatosCorporativosForm>({
+    razonSocial: '',
     cuit: '',
-    personaContacto: perfilActual?.nombre || '',
-    emailComercial: perfilActual?.email || '',
-    telefono: perfilActual?.telefono || '',
-    localidad: perfilActual?.localidad || '',
+    personaContacto: '',
+    emailComercial: '',
+    telefono: '',
+    localidad: '',
     tipoEntidad: '',
-  }));
-  const [operativa, setOperativa] = useState<CapacidadOperativaForm>(() => ({
-    rubroPrincipal: perfilActual?.rubro || '',
+  });
+  const [operativa, setOperativa] = useState<CapacidadOperativaForm>({
+    rubroPrincipal: '',
     tamanoEmpresa: '',
     experienciaMineraPrevia: null,
-    descripcionFlota: perfilActual?.descripcion || '',
-  }));
+    descripcionFlota: '',
+  });
   const [certificaciones, setCertificaciones] = useState<CertificacionesCalidadForm>({
     normasISO: [],
     registroProvincial: false,
     programaRSEActivo: false,
   });
 
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    getProveedorProfile(uid)
+      .then((p) => {
+        if (cancelled || !p) return;
+        setDatos({
+          razonSocial: (p.razonSocial as string) ?? (p.empresa as string) ?? '',
+          cuit: (p.cuit as string) ?? '',
+          personaContacto: (p.personaContacto as string) ?? (p.nombre as string) ?? '',
+          emailComercial: (p.emailComercial as string) ?? (p.email as string) ?? '',
+          telefono: (p.telefono as string) ?? '',
+          localidad: (p.localidad as string) ?? '',
+          tipoEntidad: (p.tipoEntidad as string) ?? '',
+        });
+        setOperativa({
+          rubroPrincipal: (p.rubroPrincipal as string) ?? (p.rubro as string) ?? '',
+          tamanoEmpresa: (p.tamanoEmpresa as string) ?? '',
+          experienciaMineraPrevia: (p.experienciaMineraPrevia as boolean | null) ?? null,
+          descripcionFlota: (p.descripcionFlota as string) ?? (p.descripcion as string) ?? '',
+        });
+        setCertificaciones({
+          normasISO: (p.normasISO as string[]) ?? [],
+          registroProvincial: (p.registroProvincial as boolean) ?? false,
+          programaRSEActivo: (p.programaRSEActivo as boolean) ?? false,
+        });
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
   const documentos = useMemo(() => {
-    const semaforo = perfilActual?.semaforo || {};
+    const semaforo = (perfilActual?.semaforo || {}) as Record<string, string | undefined>;
     return DOCUMENTOS_PROVEEDOR.map((d) => ({
       id: d.id,
       label: d.label,
-      estado: semaforoToEstado(semaforo[d.id as TipoDocumento]),
+      estado: semaforoToEstado(semaforo[d.id]),
       tipoDocumento: d.id as TipoDocumento,
     }));
   }, [perfilActual?.semaforo]);
@@ -95,9 +136,47 @@ export function ProveedorPerfilPage() {
     [datos, operativa, certificaciones, docsAprobados, docsTotal]
   );
 
-  const handleGuardar = () => {
-    addToast('Perfil corporativo guardado correctamente.');
+  const handleGuardar = async () => {
+    if (!uid) return;
+    setSaving(true);
+    try {
+      await createOrUpdateProfile(uid, 'proveedor', {
+        nombre: datos.personaContacto,
+        empresa: datos.razonSocial,
+        localidad: datos.localidad,
+        email: datos.emailComercial,
+        telefono: datos.telefono,
+        descripcion: operativa.descripcionFlota,
+        rubro: operativa.rubroPrincipal,
+        razonSocial: datos.razonSocial,
+        cuit: datos.cuit,
+        personaContacto: datos.personaContacto,
+        emailComercial: datos.emailComercial,
+        tipoEntidad: datos.tipoEntidad,
+        tamanoEmpresa: operativa.tamanoEmpresa,
+        experienciaMineraPrevia: operativa.experienciaMineraPrevia,
+        descripcionFlota: operativa.descripcionFlota,
+        normasISO: certificaciones.normasISO,
+        registroProvincial: certificaciones.registroProvincial,
+        programaRSEActivo: certificaciones.programaRSEActivo,
+      });
+      await refreshPerfiles();
+      addToast('Perfil corporativo guardado correctamente.');
+    } catch (err) {
+      console.error(err);
+      addToast('Error al guardar. Intentá nuevamente.', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="py-16 flex justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="py-8 px-4">
@@ -164,15 +243,19 @@ export function ProveedorPerfilPage() {
               />
             )}
             {activeTab === 'compliance' && <TabComplianceLegal />}
+            {activeTab === 'sustentabilidad' && <ProveedorESG />}
 
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <button
-                onClick={handleGuardar}
-                className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-500 transition"
-              >
-                Guardar cambios
-              </button>
-            </div>
+            {activeTab !== 'sustentabilidad' && (
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <button
+                  onClick={handleGuardar}
+                  disabled={saving}
+                  className="px-6 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

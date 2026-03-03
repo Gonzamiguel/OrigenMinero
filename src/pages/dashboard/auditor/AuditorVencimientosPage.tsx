@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Loader2, ExternalLink, Ban } from 'lucide-react';
+import { AlertTriangle, Loader2, ExternalLink, Bell, AlertOctagon } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import {
   getApprovedDocumentsWithExpiry,
@@ -9,7 +9,11 @@ import {
 
 function formatDate(ts: { toMillis: () => number } | null): string {
   if (!ts) return '-';
-  return new Date(ts.toMillis()).toLocaleDateString('es-AR');
+  return new Date(ts.toMillis()).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 export function AuditorVencimientosPage() {
@@ -57,14 +61,40 @@ export function AuditorVencimientosPage() {
     return { proximos: sortByDate(proximos), vencidos: sortByDate(vencidos) };
   }, [docs, now, next30]);
 
-  const handleRevocar = async (docId: string) => {
+  const handleEnviarAviso = async (doc: DocumentoConVencimiento) => {
+    try {
+      const fechaVencimientoFormateada = doc.fechaVencimiento
+        ? formatDate(doc.fechaVencimiento)
+        : '-';
+      const payload = {
+        email: doc.email ?? '-',
+        nombre: doc.nombre ?? 'Proveedor',
+        tipoDocumento: doc.tipoDocumento ?? 'Documento',
+        fechaVencimiento: fechaVencimientoFormateada,
+      };
+
+      const res = await fetch('https://hook.us2.make.com/9r5xflyrlara9ky6cyes1lvfv6x4ukod', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      addToast(`Aviso enviado a ${doc.email}`);
+    } catch (err) {
+      console.error('Error al disparar el webhook:', err);
+      addToast('Error al enviar el aviso.', 'error');
+    }
+  };
+
+  const handleDeclararVencido = async (docId: string) => {
     try {
       await updateDocumentEstado(docId, 'vencido');
-      addToast('Estado actualizado a vencido.');
+      addToast('Documento declarado vencido correctamente.');
       load();
     } catch (err) {
       console.error(err);
-      addToast('No se pudo revocar la aprobación.', 'error');
+      addToast('No se pudo declarar el documento como vencido.', 'error');
     }
   };
 
@@ -109,13 +139,15 @@ export function AuditorVencimientosPage() {
               title="Próximos a vencer (30 días)"
               color="amber"
               items={proximos}
-              onRevocar={handleRevocar}
+              zone="proximos"
+              onEnviarAviso={handleEnviarAviso}
             />
             <Section
               title="Vencidos"
               color="red"
               items={vencidos}
-              onRevocar={handleRevocar}
+              zone="vencidos"
+              onDeclararVencido={handleDeclararVencido}
             />
           </div>
         )}
@@ -128,10 +160,12 @@ interface SectionProps {
   title: string;
   color: 'amber' | 'red';
   items: DocumentoConVencimiento[];
-  onRevocar: (id: string) => void;
+  zone: 'proximos' | 'vencidos';
+  onEnviarAviso?: (doc: DocumentoConVencimiento) => void;
+  onDeclararVencido?: (docId: string) => void;
 }
 
-function Section({ title, color, items, onRevocar }: SectionProps) {
+function Section({ title, color, items, zone, onEnviarAviso, onDeclararVencido }: SectionProps) {
   const badgeColor = color === 'amber' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
   const borderColor = color === 'amber' ? 'border-amber-200' : 'border-red-200';
 
@@ -152,25 +186,30 @@ function Section({ title, color, items, onRevocar }: SectionProps) {
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left p-4 font-semibold text-slate-700">Usuario</th>
-                <th className="text-left p-4 font-semibold text-slate-700">Documento</th>
-                <th className="text-left p-4 font-semibold text-slate-700">Vence</th>
-                <th className="text-left p-4 font-semibold text-slate-700">Última act.</th>
-                <th className="text-left p-4 font-semibold text-slate-700"></th>
+                <th className="text-left py-5 px-6 font-semibold text-slate-700">Usuario</th>
+                <th className="text-left py-5 px-6 font-semibold text-slate-700">Documento</th>
+                <th className="text-left py-5 px-6 font-semibold text-slate-700">Vence</th>
+                <th className="text-left py-5 px-6 font-semibold text-slate-700">Última act.</th>
+                <th className="text-right py-5 px-6 font-semibold text-slate-700"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((d) => (
                 <tr key={d.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="p-4 text-slate-800">{d.userId || '-'}</td>
-                  <td className="p-4 text-slate-700 capitalize">{d.tipoDocumento || 'Documento'}</td>
-                  <td className="p-4">
+                  <td className="py-5 px-6">
+                    <div>
+                      <p className="text-slate-800 font-medium">{d.nombre || d.userId || '-'}</p>
+                      <p className="text-sm text-slate-500">{d.email || '-'}</p>
+                    </div>
+                  </td>
+                  <td className="py-5 px-6 text-slate-700 capitalize">{d.tipoDocumento || 'Documento'}</td>
+                  <td className="py-5 px-6">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border ${borderColor}`}>
                       {formatDate(d.fechaVencimiento)}
                     </span>
                   </td>
-                  <td className="p-4 text-slate-600">{formatDate(d.updatedAt || d.fechaSubida)}</td>
-                  <td className="p-4 text-right space-x-2">
+                  <td className="py-5 px-6 text-slate-600">{formatDate(d.updatedAt || d.fechaSubida)}</td>
+                  <td className="py-5 px-6 text-right space-x-2">
                     {d.fileUrl && (
                       <a
                         href={d.fileUrl}
@@ -182,13 +221,24 @@ function Section({ title, color, items, onRevocar }: SectionProps) {
                         Ver
                       </a>
                     )}
-                    <button
-                      onClick={() => onRevocar(d.id)}
-                      className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500"
-                    >
-                      <Ban className="w-4 h-4" />
-                      Revocar aprobación
-                    </button>
+                    {zone === 'proximos' && onEnviarAviso && (
+                      <button
+                        onClick={() => onEnviarAviso(d)}
+                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600"
+                      >
+                        <Bell className="w-4 h-4" />
+                        Enviar Aviso
+                      </button>
+                    )}
+                    {zone === 'vencidos' && onDeclararVencido && (
+                      <button
+                        onClick={() => onDeclararVencido(d.id)}
+                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500"
+                      >
+                        <AlertOctagon className="w-4 h-4" />
+                        Declarar Vencido
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApp } from '../../context/AppContext';
 import { uploadDocument } from '../../lib/firebase/documentService';
 
 const TIPOS_DOCUMENTO_PROFESIONAL = [
@@ -16,6 +17,7 @@ const TIPOS_DOCUMENTO_PROFESIONAL = [
 
 export function DocumentsProfesionalPage() {
   const { user } = useAuth();
+  const { refreshPerfiles } = useApp();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -47,6 +49,7 @@ export function DocumentsProfesionalPage() {
       await uploadDocument(selectedFile, userId, tipoDocumento);
       setSelectedFile(null);
       setSuccess(true);
+      await refreshPerfiles();
     } catch (err) {
       console.error(err);
       setError('Error al subir el archivo.');
